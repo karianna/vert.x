@@ -51,6 +51,9 @@ public class VertxOptionsConverter {
     if (json.getValue("clustered") instanceof Boolean) {
       obj.setClustered((Boolean)json.getValue("clustered"));
     }
+    if (json.getValue("eventBusOptions") instanceof JsonObject) {
+      obj.setEventBusOptions(new io.vertx.core.eventbus.EventBusOptions((JsonObject)json.getValue("eventBusOptions")));
+    }
     if (json.getValue("eventLoopPoolSize") instanceof Number) {
       obj.setEventLoopPoolSize(((Number)json.getValue("eventLoopPoolSize")).intValue());
     }
@@ -59,6 +62,9 @@ public class VertxOptionsConverter {
     }
     if (json.getValue("haGroup") instanceof String) {
       obj.setHAGroup((String)json.getValue("haGroup"));
+    }
+    if (json.getValue("hostnameResolverOptions") instanceof JsonObject) {
+      obj.setHostnameResolverOptions(new io.vertx.core.dns.HostnameResolverOptions((JsonObject)json.getValue("hostnameResolverOptions")));
     }
     if (json.getValue("internalBlockingPoolSize") instanceof Number) {
       obj.setInternalBlockingPoolSize(((Number)json.getValue("internalBlockingPoolSize")).intValue());
@@ -96,10 +102,16 @@ public class VertxOptionsConverter {
     }
     json.put("clusterPublicPort", obj.getClusterPublicPort());
     json.put("clustered", obj.isClustered());
+    if (obj.getEventBusOptions() != null) {
+      json.put("eventBusOptions", obj.getEventBusOptions().toJson());
+    }
     json.put("eventLoopPoolSize", obj.getEventLoopPoolSize());
     json.put("haEnabled", obj.isHAEnabled());
     if (obj.getHAGroup() != null) {
       json.put("haGroup", obj.getHAGroup());
+    }
+    if (obj.getHostnameResolverOptions() != null) {
+      json.put("hostnameResolverOptions", obj.getHostnameResolverOptions().toJson());
     }
     json.put("internalBlockingPoolSize", obj.getInternalBlockingPoolSize());
     json.put("maxEventLoopExecuteTime", obj.getMaxEventLoopExecuteTime());

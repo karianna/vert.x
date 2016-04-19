@@ -18,6 +18,7 @@ package examples;
 
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.dns.HostnameResolverOptions;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
@@ -119,13 +120,18 @@ public class CoreExamples {
     FileSystem fs = vertx.fileSystem();
 
     Future<Void> fut1 = Future.future();
-    Future<Void> fut2 = Future.future();
 
     fs.createFile("/foo", fut1.completer());
     fut1.compose(v -> {
+
+      Future<Void> fut2 = Future.future();
       fs.writeFile("/foo", Buffer.buffer(), fut2.completer());
-    }, fut2);
-    fut2.compose(v -> {
+
+      // Compose fut1 with fut2
+      return fut2;
+    }).compose(v -> {
+
+      // Compose fut1 with fut2 and fut3
       fs.move("/foo", "/bar", startFuture.completer());
     }, startFuture);
   }
@@ -269,8 +275,13 @@ public class CoreExamples {
     System.getenv("HOME");
   }
 
-
-
-
+  public void configureDNSServers() {
+    Vertx vertx = Vertx.vertx(new VertxOptions().
+        setHostnameResolverOptions(
+            new HostnameResolverOptions().
+                addServer("192.168.0.1").
+                addServer("192.168.0.2:40000"))
+    );
+  }
 
 }

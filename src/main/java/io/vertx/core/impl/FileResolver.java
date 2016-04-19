@@ -18,12 +18,9 @@ package io.vertx.core.impl;
 
 import io.vertx.core.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.io.Closeable;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -57,7 +54,7 @@ public class FileResolver {
 
   private static final String DEFAULT_CACHE_DIR_BASE = ".vertx";
   private static final String FILE_SEP = System.getProperty("file.separator");
-  private static boolean NON_UNIX_FILE_SEP = !FILE_SEP.equals("/");
+  private static final boolean NON_UNIX_FILE_SEP = !FILE_SEP.equals("/");
   private static final boolean ENABLE_CACHING = !Boolean.getBoolean(DISABLE_FILE_CACHING_PROP_NAME);
   private static final boolean ENABLE_CP_RESOLVING = !Boolean.getBoolean(DISABLE_CP_RESOLVING_PROP_NAME);
   private static final String CACHE_DIR_BASE = System.getProperty(CACHE_DIR_BASE_PROP_NAME, DEFAULT_CACHE_DIR_BASE);
@@ -165,16 +162,22 @@ public class FileResolver {
   }
 
   private synchronized File unpackFromJarURL(URL url, String fileName, ClassLoader cl) {
+    ZipFile zip = null;
     try {
-      ZipFile zip;
       String path = url.getPath();
       int idx1 = path.lastIndexOf(".jar!");
+      if (idx1 == -1) {
+        idx1 = path.lastIndexOf(".zip!");
+      }
       int idx2 = path.lastIndexOf(".jar!", idx1 - 1);
+      if (idx2 == -1) {
+        idx2 = path.lastIndexOf(".zip!", idx1 - 1);
+      }
       if (idx2 == -1) {
         File file = new File(URLDecoder.decode(path.substring(5, idx1 + 4), "UTF-8"));
         zip = new ZipFile(file);
       } else {
-        String s = path.substring(idx2 + 6, idx1) + ".jar";
+        String s = path.substring(idx2 + 6, idx1 + 4);
         File file = resolveFile(s);
         zip = new ZipFile(file);
       }
@@ -203,9 +206,21 @@ public class FileResolver {
       }
     } catch (IOException e) {
       throw new VertxException(e);
+    } finally {
+      closeQuietly(zip);
     }
 
     return new File(cacheDir, fileName);
+  }
+
+  private void closeQuietly(Closeable zip) {
+    if (zip != null) {
+      try {
+        zip.close();
+      } catch (IOException e) {
+        // Ignored.
+      }
+    }
   }
 
   /**

@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-parent</artifactId>
-    <version>8</version>
+    <version>9</version>
   </parent>
 
   <artifactId>vertx-core</artifactId>
@@ -60,9 +60,11 @@
     <junit.version>4.12</junit.version>
     <assertj.version>3.3.0</assertj.version>
     <apacheds-protocol-dns.version>1.5.7</apacheds-protocol-dns.version>
-    <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
     <generated.dir>${project.basedir}/src/main/generated</generated.dir>
     <stack.version>3.3.0-SNAPSHOT</stack.version>
+    <jetty.alpnAgent.version>2.0.0</jetty.alpnAgent.version>
+    <jetty.alpnAgent.path>${settings.localRepository}/org/mortbay/jetty/alpn/jetty-alpn-agent/${jetty.alpnAgent.version}/jetty-alpn-agent-${jetty.alpnAgent.version}.jar</jetty.alpnAgent.path>
+    <tcnative.classifier>${os.detected.classifier}</tcnative.classifier>
 
   </properties>
 
@@ -106,6 +108,21 @@
       <version>${netty.version}</version>
     </dependency>
     <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec-http2</artifactId>
+      <version>${netty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-resolver</artifactId>
+      <version>${netty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-resolver-dns</artifactId>
+      <version>${netty.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
       <version>${jackson.version}</version>
@@ -113,7 +130,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>${jackson.version}</version>
+      <version>${jackson.databind.version}</version>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>
@@ -162,9 +179,32 @@
       <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mortbay.jetty.alpn</groupId>
+      <artifactId>jetty-alpn-agent</artifactId>
+      <version>${jetty.alpnAgent.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <!--<artifactId>netty-tcnative</artifactId>-->
+      <artifactId>netty-tcnative-boringssl-static</artifactId>
+      <classifier>${tcnative.classifier}</classifier>
+      <version>1.1.33.Fork15</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
+
+    <extensions>
+      <extension>
+        <groupId>kr.motd.maven</groupId>
+        <artifactId>os-maven-plugin</artifactId>
+        <version>1.4.1.Final</version>
+      </extension>
+    </extensions>
+
     <pluginManagement>
       <plugins>
         <plugin>
@@ -210,6 +250,7 @@
             <additionalClasspathElements>
               <additionalClasspathElement>${project.build.testSourceDirectory}</additionalClasspathElement>
               <additionalClasspathElement>${basedir}/src/test/resources/webroot2.jar</additionalClasspathElement>
+              <additionalClasspathElement>${basedir}/src/test/resources/webroot5.zip</additionalClasspathElement>
             </additionalClasspathElements>
             <systemPropertyVariables>
               <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
@@ -218,7 +259,7 @@
               <vertx.handle100Continue>true</vertx.handle100Continue>
             </systemPropertyVariables>
             <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
-            <argLine>-Xmx1200M</argLine>
+            <argLine>-Xmx1200M -javaagent:${jetty.alpnAgent.path}</argLine>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
           </configuration>
@@ -226,15 +267,6 @@
         <plugin>
           <groupId>org.asciidoctor</groupId>
           <artifactId>asciidoctor-maven-plugin</artifactId>
-          <version>1.5.2</version>
-          <configuration>
-            <sourceDirectory>${asciidoc.dir}</sourceDirectory>
-            <outputDirectory>${project.build.directory}/docs/vertx-core</outputDirectory>
-            <preserveDirectories>true</preserveDirectories>
-            <relativeBaseDir>true</relativeBaseDir>
-            <backend>html</backend>
-            <doctype>book</doctype>
-          </configuration>
           <executions>
             <execution>
               <goals>

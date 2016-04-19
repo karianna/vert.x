@@ -459,11 +459,15 @@ public class MetricsTest extends VertxTestBase {
     EventBus eb = vertx.eventBus();
     FakeEventBusMetrics metrics = FakeMetricsBase.getMetrics(eb);
     AtomicReference<String> replyAddress = new AtomicReference<>();
+    CountDownLatch regLatch = new CountDownLatch(1);
     eb.consumer("foo", msg -> {
       replyAddress.set(msg.replyAddress());
       msg.fail(0, "whatever");
-    });
-    eb.send("foo", "bar", new DeliveryOptions().setSendTimeout(10), ar -> {
+    }).completionHandler(onSuccess(v -> {
+      regLatch.countDown();
+    }));
+    awaitLatch(regLatch);
+    eb.send("foo", "bar", new DeliveryOptions(), ar -> {
       assertTrue(ar.failed());
       latch.countDown();
     });
@@ -657,7 +661,8 @@ public class MetricsTest extends VertxTestBase {
     peer1.handler(packet -> {
       FakeDatagramSocketMetrics peer1Metrics = FakeMetricsBase.getMetrics(peer1);
       FakeDatagramSocketMetrics peer2Metrics = FakeMetricsBase.getMetrics(peer2);
-      assertEquals(host, peer1Metrics.getLocalAddress().host());
+      assertEquals(host, peer1Metrics.getLocalName());
+      assertEquals("127.0.0.1", peer1Metrics.getLocalAddress().host());
       assertNull(peer2Metrics.getLocalAddress());
       assertEquals(1, peer1Metrics.getReads().size());
       PacketMetric read = peer1Metrics.getReads().get(0);

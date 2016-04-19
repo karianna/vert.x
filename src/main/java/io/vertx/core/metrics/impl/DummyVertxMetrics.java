@@ -25,6 +25,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
@@ -165,6 +166,15 @@ public class DummyVertxMetrics implements VertxMetrics {
     }
 
     @Override
+    public void requestReset(Void requestMetric) {
+    }
+
+    @Override
+    public Void responsePushed(Void socketMetric, HttpMethod method, String uri, HttpServerResponse response) {
+      return null;
+    }
+
+    @Override
     public void responseEnd(Void requestMetric, HttpServerResponse response) {
     }
 
@@ -218,6 +228,15 @@ public class DummyVertxMetrics implements VertxMetrics {
     @Override
     public Void requestBegin(Void socketMetric, SocketAddress localAddress, SocketAddress remoteAddress, HttpClientRequest request) {
       return null;
+    }
+
+    @Override
+    public Void responsePushed(Void socketMetric, SocketAddress localAddress, SocketAddress remoteAddress, HttpClientRequest request) {
+      return null;
+    }
+
+    @Override
+    public void requestReset(Void requestMetric) {
     }
 
     @Override
@@ -300,7 +319,7 @@ public class DummyVertxMetrics implements VertxMetrics {
   protected class DummyDatagramMetrics implements DatagramSocketMetrics {
 
     @Override
-    public void listening(SocketAddress localAddress) {
+    public void listening(String localName, SocketAddress localAddress) {
     }
 
     @Override

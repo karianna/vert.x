@@ -247,11 +247,13 @@
  * you diagnose such issues, Vert.x will automatically log warnings if it detects an event loop hasn't returned for
  * some time. If you see warnings like these in your logs, then you should investigate.
  *
- *  Thread vertx-eventloop-thread-3 has been blocked for 20458 ms
+ * ----
+ * Thread vertx-eventloop-thread-3 has been blocked for 20458 ms
+ * ----
  *
  * Vert.x will also provide stack traces to pinpoint exactly where the blocking is occurring.
  *
- * If you want to turn of these warnings or change the settings, you can do that in the
+ * If you want to turn off these warnings or change the settings, you can do that in the
  * {@link io.vertx.core.VertxOptions} object before creating the Vertx object.
  *
  * [[blocking_code]]
@@ -333,9 +335,9 @@
  *
  * To use this model, you write your code as set of *verticles*.
  *
- * Verticles are chunks of code that get deployed and
- * run by Vert.x. Verticles can be written in any of the languages that Vert.x supports and a single application
- * can include verticles written in multiple languages.
+ * Verticles are chunks of code that get deployed and run by Vert.x. A Vert.x instance maintains N event loop threads
+ * (where N by default is core*2) by default. Verticles can be written in any of the languages that Vert.x supports
+ * and a single application can include verticles written in multiple languages.
  *
  * You can think of a verticle as a bit like an actor in the http://en.wikipedia.org/wiki/Actor_model[Actor Model].
  *
@@ -1003,6 +1005,10 @@
  *
  *  If option values contain spaces, don't forget to wrap the value between {@code ""} (double-quotes).
  *
+ *  As the `start` command spawns a new process, the java options passed to the JVM are not propagated, so you **must**
+ *  use `java-opts` to configure the JVM (`-X`, `-D`...). If you use the `CLASSPATH` environment variable, be sure it
+ *  contains all the required jars (vertx-core, your jars and all the dependencies).
+ *
  * The set of commands is extensible, refer to the <<Extending the vert.x Launcher>> section.
  *
  * === Live Redeploy
@@ -1015,7 +1021,7 @@
  * ----
  * vertx run MyVerticle.groovy --redeploy="**&#47;*.groovy" --launcher-class=io.vertx.core.Launcher
  * vertx run MyVerticle.groovy --redeploy="**&#47;*.groovy,**&#47;*.rb"  --launcher-class=io.vertx.core.Launcher
- * java io.vertx.core.Launcher run org.acme.MyVerticle –redeploy="**&#47;*.class"  --launcher-class=io.vertx.core
+ * java io.vertx.core.Launcher run org.acme.MyVerticle --redeploy="**&#47;*.class"  --launcher-class=io.vertx.core
  * .Launcher -cp ...
  * ----
  *
@@ -1052,7 +1058,7 @@
  *
  * [source]
  * ----
- * java –jar target/my-fat-jar.jar –redeploy="**&#47;*.java" --on-redeploy="mvn package"
+ * java -jar target/my-fat-jar.jar --redeploy="**&#47;*.java" --on-redeploy="mvn package"
  * java -jar build/libs/my-fat-jar.jar --redeploy="src&#47;**&#47;*.java" --on-redeploy='./gradlew shadowJar'
  * ----
  *
@@ -1137,6 +1143,29 @@
  * ----
  * {@link examples.CoreExamples#example18}
  * ----
+ *
+ * == Hostname resolution
+ *
+ * Vert.x uses an an hostname resolver for resolving hostname into IP addresses instead of
+ * the JVM built-in blocking resolver.
+ *
+ * An hostname are resolve to an IP address using:
+ *
+ * - the _hosts_ file of the operating system
+ * - otherwise DNS queries against a list of servers
+ *
+ * By default it will use the list of the system DNS server addresses from the environment, if that list cannot be
+ * retrieved it will use Google's public DNS servers `"8.8.8.8"` and `"8.8.4.4"`.
+ *
+ * DNS servers can be also configured when creating a {@link io.vertx.core.Vertx} instance:
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.CoreExamples#configureDNSServers}
+ * ----
+ *
+ * The default port of a DNS server is `53`, when a server uses a different port, this port can be set
+ * using a colon delimiter: `192.168.0.2:40000`.
  *
  * == High Availability and Fail-Over
  *

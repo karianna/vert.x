@@ -16,8 +16,11 @@
 
 package io.vertx.test.fakemetrics;
 
-import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -26,6 +29,8 @@ public class HttpServerMetric {
 
   public final HttpServerRequest request;
   public final SocketMetric socket;
+  public final AtomicBoolean failed = new AtomicBoolean();
+  public final AtomicReference<HttpServerResponse> response = new AtomicReference<>();
 
   public HttpServerMetric(HttpServerRequest request, SocketMetric socket) {
     this.request = request;

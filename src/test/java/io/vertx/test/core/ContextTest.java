@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -174,6 +175,98 @@ public class ContextTest extends VertxTestBase {
         assertSame(workerContext.get(), Vertx.currentContext());
         assertTrue(Context.isOnWorkerThread());
         testComplete();
+      });
+    });
+    await();
+  }
+
+  @Test
+  public void testContextExceptionHandler() {
+    RuntimeException failure = new RuntimeException();
+    Context context = vertx.getOrCreateContext();
+    context.exceptionHandler(err -> {
+      assertSame(context, Vertx.currentContext());
+      assertSame(failure, err);
+      testComplete();
+    });
+    context.runOnContext(v -> {
+      throw failure;
+    });
+    await();
+  }
+
+  @Test
+  public void testContextExceptionHandlerFailing() {
+    RuntimeException failure = new RuntimeException();
+    Context context = vertx.getOrCreateContext();
+    AtomicInteger count = new AtomicInteger();
+    context.exceptionHandler(err -> {
+      if (count.getAndIncrement() == 0) {
+        throw new RuntimeException();
+      } else {
+        assertSame(failure, err);
+        testComplete();
+      }
+    });
+    context.runOnContext(v -> {
+      throw new RuntimeException();
+    });
+    context.runOnContext(v -> {
+      throw failure;
+    });
+    await();
+  }
+
+  @Test
+  public void testDefaultContextExceptionHandler() {
+    RuntimeException failure = new RuntimeException();
+    vertx.exceptionHandler(err -> {
+      assertSame(failure, err);
+      testComplete();
+    });
+    Context context = vertx.getOrCreateContext();
+    context.runOnContext(v -> {
+      throw failure;
+    });
+    await();
+  }
+
+  @Test
+  public void testExceptionHandlerOnDeploymentAsyncResultHandlerFailure() {
+    RuntimeException failure = new RuntimeException();
+    Context ctx = vertx.getOrCreateContext();
+    ctx.exceptionHandler(err -> {
+      assertSame(failure, err);
+      testComplete();
+    });
+    ctx.runOnContext(v -> {
+      vertx.deployVerticle(new AbstractVerticle() {
+        @Override
+        public void start() throws Exception {
+        }
+      }, ar -> {
+        throw failure;
+      });
+    });
+    await();
+  }
+
+  @Test
+  public void testExceptionHandlerOnAsyncDeploymentAsyncResultHandlerFailure() {
+    RuntimeException failure = new RuntimeException();
+    Context ctx = vertx.getOrCreateContext();
+    ctx.exceptionHandler(err -> {
+      assertSame(failure, err);
+      testComplete();
+    });
+    ctx.runOnContext(v -> {
+      vertx.deployVerticle(new AbstractVerticle() {
+        @Override
+        public void start(Future<Void> startFuture) throws Exception {
+          context.runOnContext(startFuture::complete);
+        }
+      }, ar -> {
+        throw failure;
       });
     });
     await();

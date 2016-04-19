@@ -45,6 +45,12 @@ public class TCPSSLOptionsConverter {
           obj.addEnabledCipherSuite((String)item);
       });
     }
+    if (json.getValue("enabledSecureTransportProtocols") instanceof JsonArray) {
+      json.getJsonArray("enabledSecureTransportProtocols").forEach(item -> {
+        if (item instanceof String)
+          obj.addEnabledSecureTransportProtocol((String)item);
+      });
+    }
     if (json.getValue("idleTimeout") instanceof Number) {
       obj.setIdleTimeout(((Number)json.getValue("idleTimeout")).intValue());
     }
@@ -69,6 +75,9 @@ public class TCPSSLOptionsConverter {
     if (json.getValue("ssl") instanceof Boolean) {
       obj.setSsl((Boolean)json.getValue("ssl"));
     }
+    if (json.getValue("sslEngine") instanceof String) {
+      obj.setSslEngine(io.vertx.core.net.SSLEngine.valueOf((String)json.getValue("sslEngine")));
+    }
     if (json.getValue("tcpKeepAlive") instanceof Boolean) {
       obj.setTcpKeepAlive((Boolean)json.getValue("tcpKeepAlive"));
     }
@@ -77,6 +86,9 @@ public class TCPSSLOptionsConverter {
     }
     if (json.getValue("trustStoreOptions") instanceof JsonObject) {
       obj.setTrustStoreOptions(new io.vertx.core.net.JksOptions((JsonObject)json.getValue("trustStoreOptions")));
+    }
+    if (json.getValue("useAlpn") instanceof Boolean) {
+      obj.setUseAlpn((Boolean)json.getValue("useAlpn"));
     }
     if (json.getValue("usePooledBuffers") instanceof Boolean) {
       obj.setUsePooledBuffers((Boolean)json.getValue("usePooledBuffers"));
@@ -105,11 +117,22 @@ public class TCPSSLOptionsConverter {
               map(item -> item).
               collect(java.util.stream.Collectors.toList())));
     }
+    if (obj.getEnabledSecureTransportProtocols() != null) {
+      json.put("enabledSecureTransportProtocols", new JsonArray(
+          obj.getEnabledSecureTransportProtocols().
+              stream().
+              map(item -> item).
+              collect(java.util.stream.Collectors.toList())));
+    }
     json.put("idleTimeout", obj.getIdleTimeout());
     json.put("soLinger", obj.getSoLinger());
     json.put("ssl", obj.isSsl());
+    if (obj.getSslEngine() != null) {
+      json.put("sslEngine", obj.getSslEngine().name());
+    }
     json.put("tcpKeepAlive", obj.isTcpKeepAlive());
     json.put("tcpNoDelay", obj.isTcpNoDelay());
+    json.put("useAlpn", obj.isUseAlpn());
     json.put("usePooledBuffers", obj.isUsePooledBuffers());
   }
 }
